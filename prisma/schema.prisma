@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlserver"
+  url      = env("DATABASE_URL")
+}
+
+model sysdiagrams {
+  name         String @db.NVarChar(128)
+  principal_id Int
+  diagram_id   Int    @id(map: "PK__sysdiagr__C2B05B6146433272") @default(autoincrement())
+  version      Int?
+  definition   Bytes?
+
+  @@unique([principal_id, name], map: "UK_principal_name")
+}
+
+model Tbl_Logs {
+  id_log              BigInt        @id(map: "PK__Tbl_Logs__6CC851FEF82B131D") @default(autoincrement())
+  id_usuario          Int?
+  accion              String        @db.NVarChar(100)
+  descripcion         String?       @db.NVarChar(500)
+  entidad             String?       @db.NVarChar(100)
+  id_entidad_afectada Int?
+  fecha               DateTime?     @default(now(), map: "DF__Tbl_Logs__fecha__4BAC3F29") @db.DateTime
+  ip_origen           String?       @db.NVarChar(50)
+  user_agent          String?       @db.NVarChar(250)
+  Tbl_Usuarios        Tbl_Usuarios? @relation(fields: [id_usuario], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Tbl_Logs__id_usu__4CA06362")
+}
+
+model Tbl_Parcelas {
+  id             Int           @id(map: "PK__Tbl_Parc__3213E83F141D1F71") @default(autoincrement())
+  latitud        String        @db.NVarChar(200)
+  longitud       String        @db.NVarChar(200)
+  nombre         String        @db.NVarChar(50)
+  id_usuario     Int?
+  fecha_creacion DateTime?     @default(now(), map: "DF__Tbl_Parce__fecha__46E78A0C") @db.DateTime
+  borrado        Boolean?      @default(false, map: "DF__Tbl_Parce__borra__47DBAE45")
+  Tbl_Usuarios   Tbl_Usuarios? @relation(fields: [id_usuario], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Tbl_Parce__id_us__48CFD27E")
+}
+
+model Tbl_Persona {
+  id               Int            @id(map: "PK__Tbl_Pers__3213E83F57854072") @default(autoincrement())
+  nombre           String         @db.NVarChar(50)
+  apellido_paterno String         @db.NVarChar(50)
+  apellido_materno String         @db.NVarChar(50)
+  telefono         String?        @db.NVarChar(20)
+  direccion        String?        @db.NVarChar(200)
+  fecha_nacimiento DateTime?      @db.Date
+  borrado          Boolean?       @default(false, map: "DF__Tbl_Perso__borra__3B75D760")
+  fecha_creacion   DateTime?      @default(now(), map: "DF__Tbl_Perso__fecha__3C69FB99") @db.DateTime
+  Tbl_Usuarios     Tbl_Usuarios[]
+}
+
+model Tbl_Roles {
+  id           Int            @id(map: "PK__Tbl_Role__3213E83FAFE043ED") @default(autoincrement())
+  nombre       String         @unique(map: "UQ__Tbl_Role__72AFBCC6A9A047DA") @db.NVarChar(50)
+  borrado      Boolean?       @default(false, map: "DF__Tbl_Roles__borra__38996AB5")
+  Tbl_Usuarios Tbl_Usuarios[]
+}
+
+model Tbl_Usuarios {
+  id             Int            @id(map: "PK__Tbl_Usua__3213E83F17BD2D93") @default(autoincrement())
+  username       String         @unique(map: "UQ__Tbl_Usua__F3DBC572F321E92E") @db.NVarChar(100)
+  password_hash  String         @db.NVarChar(255)
+  email          String         @unique(map: "UQ__Tbl_Usua__AB6E61642613258A") @db.NVarChar(150)
+  id_role        Int
+  id_persona     Int
+  borrado        Boolean?       @default(false, map: "DF__Tbl_Usuar__borra__412EB0B6")
+  fecha_creacion DateTime?      @default(now(), map: "DF__Tbl_Usuar__fecha__4222D4EF") @db.DateTime
+  Tbl_Logs       Tbl_Logs[]
+  Tbl_Parcelas   Tbl_Parcelas[]
+  Tbl_Persona    Tbl_Persona    @relation(fields: [id_persona], references: [id], onUpdate: NoAction, map: "FK__Tbl_Usuar__id_pe__440B1D61")
+  Tbl_Roles      Tbl_Roles      @relation(fields: [id_role], references: [id], onUpdate: NoAction, map: "FK__Tbl_Usuar__id_ro__4316F928")
+}
