@@ -6,6 +6,8 @@ const parcelasController = new ParcelasSQLController();
 
 // Rutas de Parcelas SQL
 router.get('/', (req, res) => parcelasController.getAll(req, res));
+router.get('/table', (req, res) => parcelasController.getForTable(req, res));
+router.get('/mongo/:parcelaMg_Id', (req, res) => parcelasController.getByMongoId(req, res));
 router.get('/:id', (req, res) => parcelasController.getById(req, res));
 router.get('/usuario/:id_usuario', (req, res) => parcelasController.getByUsuario(req, res));
 router.get('/search/:nombre', (req, res) => parcelasController.searchByName(req, res));

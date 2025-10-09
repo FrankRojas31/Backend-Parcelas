@@ -2,11 +2,22 @@ import { LogsRepository } from '../../repository/api/Logs.Repository';
 
 const logsRepo = new LogsRepository();
 
+// Helper para convertir BigInt a string y mapear campos
+const transformLogData = (log: any) => {
+  return {
+    ...log,
+    id: log.id_log?.toString() || log.id_log,
+    id_log: log.id_log?.toString() || log.id_log,
+    fecha_creacion: log.fecha, // Mapear el campo fecha a fecha_creacion para el frontend
+  };
+};
+
 export class LogsService {
   // Obtener todos los logs
   async getAllLogs(limit?: number) {
     try {
-      return await logsRepo.getAll(limit);
+      const logs = await logsRepo.getAll(limit);
+      return logs.map(transformLogData);
     } catch (error) {
       throw new Error(`Error al obtener logs: ${error}`);
     }
@@ -19,7 +30,7 @@ export class LogsService {
       if (!log) {
         throw new Error('Log no encontrado');
       }
-      return log;
+      return transformLogData(log);
     } catch (error) {
       throw new Error(`Error al obtener log: ${error}`);
     }
@@ -28,7 +39,8 @@ export class LogsService {
   // Obtener logs por usuario
   async getLogsByUsuario(id_usuario: number, limit?: number) {
     try {
-      return await logsRepo.getByUsuario(id_usuario, limit);
+      const logs = await logsRepo.getByUsuario(id_usuario, limit);
+      return logs.map(transformLogData);
     } catch (error) {
       throw new Error(`Error al obtener logs del usuario: ${error}`);
     }
@@ -37,7 +49,8 @@ export class LogsService {
   // Obtener logs por acción
   async getLogsByAccion(accion: string, limit?: number) {
     try {
-      return await logsRepo.getByAccion(accion, limit);
+      const logs = await logsRepo.getByAccion(accion, limit);
+      return logs.map(transformLogData);
     } catch (error) {
       throw new Error(`Error al obtener logs por acción: ${error}`);
     }
@@ -46,7 +59,8 @@ export class LogsService {
   // Obtener logs por entidad
   async getLogsByEntidad(entidad: string, limit?: number) {
     try {
-      return await logsRepo.getByEntidad(entidad, limit);
+      const logs = await logsRepo.getByEntidad(entidad, limit);
+      return logs.map(transformLogData);
     } catch (error) {
       throw new Error(`Error al obtener logs por entidad: ${error}`);
     }
@@ -57,7 +71,8 @@ export class LogsService {
     try {
       const inicio = new Date(fechaInicio);
       const fin = new Date(fechaFin);
-      return await logsRepo.getByFecha(inicio, fin);
+      const logs = await logsRepo.getByFecha(inicio, fin);
+      return logs.map(transformLogData);
     } catch (error) {
       throw new Error(`Error al obtener logs por fecha: ${error}`);
     }
@@ -74,7 +89,8 @@ export class LogsService {
     user_agent?: string;
   }) {
     try {
-      return await logsRepo.create(data);
+      const log = await logsRepo.create(data);
+      return transformLogData(log);
     } catch (error) {
       throw new Error(`Error al crear log: ${error}`);
     }
@@ -102,6 +118,16 @@ export class LogsService {
       });
     } catch (error) {
       throw new Error(`Error al registrar acción: ${error}`);
+    }
+  }
+
+  // Obtener logs de parcelas eliminadas
+  async getParcelasEliminadas(limit?: number) {
+    try {
+      const logs = await logsRepo.getByAccion('ELIMINAR_PARCELA', limit);
+      return logs.map(transformLogData);
+    } catch (error) {
+      throw new Error(`Error al obtener historial de parcelas eliminadas: ${error}`);
     }
   }
 

@@ -48,25 +48,35 @@ export class ParcelasSQLController {
     }
   }
 
-  // POST /api/parcelas-sql - Crear nueva parcela
+  // POST /api/parcelas-sql - Crear nueva parcela asociada a MongoDB
   async create(req: Request, res: Response) {
     try {
-      const { latitud, longitud, nombre, id_usuario } = req.body;
+      const { parcelaMg_Id, nombre, id_usuario } = req.body;
 
-      if (!latitud || !longitud || !nombre || !id_usuario) {
-        return ResponseHelperClass.error(res, 'Todos los campos son requeridos', 400);
+      if (!parcelaMg_Id || !nombre) {
+        return ResponseHelperClass.error(res, 'parcelaMg_Id y nombre son requeridos', 400);
       }
 
       const parcela = await parcelasService.createParcela({
-        latitud,
-        longitud,
+        parcelaMg_Id,
         nombre,
-        id_usuario: parseInt(id_usuario)
+        id_usuario: id_usuario ? parseInt(id_usuario) : undefined
       });
 
       return ResponseHelperClass.success(res, parcela, 'Parcela creada exitosamente', 201);
     } catch (error: any) {
       return ResponseHelperClass.error(res, error.message, 400);
+    }
+  }
+
+  // GET /api/parcelas-sql/mongo/:parcelaMg_Id - Obtener parcela SQL por ID de MongoDB
+  async getByMongoId(req: Request, res: Response) {
+    try {
+      const parcelaMg_Id = req.params.parcelaMg_Id;
+      const parcela = await parcelasService.getParcelaByMongoId(parcelaMg_Id);
+      return ResponseHelperClass.success(res, parcela, 'Parcela obtenida exitosamente');
+    } catch (error: any) {
+      return ResponseHelperClass.error(res, error.message, 404);
     }
   }
 
@@ -93,10 +103,20 @@ export class ParcelasSQLController {
   async delete(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id);
-      await parcelasService.deleteParcela(id);
+      const id_usuario = req.body.id_usuario; // Opcional: ID del usuario que realiza la acción
+      await parcelasService.deleteParcela(id, id_usuario);
       return ResponseHelperClass.success(res, null, 'Parcela eliminada exitosamente');
     } catch (error: any) {
       return ResponseHelperClass.error(res, error.message, 404);
+    }
+  }
+
+  async getForTable(req: Request, res: Response) {
+    try {
+      const parcelas = await parcelasService.getParcelasForTable();
+      return ResponseHelperClass.success(res, parcelas, 'Parcelas para tabla obtenidas exitosamente');
+    } catch (error: any) {
+      return ResponseHelperClass.error(res, error.message, 500);
     }
   }
 }

@@ -115,6 +115,17 @@ export class LogsController {
     }
   }
 
+  // GET /api/logs/parcelas-eliminadas - Obtener historial de parcelas eliminadas
+  async getParcelasEliminadas(req: Request, res: Response) {
+    try {
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const logs = await logsService.getParcelasEliminadas(limit);
+      return ResponseHelperClass.success(res, logs, 'Historial de parcelas eliminadas obtenido exitosamente');
+    } catch (error: any) {
+      return ResponseHelperClass.error(res, error.message, 500);
+    }
+  }
+
   // DELETE /api/logs/:id - Eliminar log (raramente usado)
   async delete(req: Request, res: Response) {
     try {

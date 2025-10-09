@@ -26,7 +26,9 @@ export const FindParcelas = async () => {
 
 export const PostParcela = async (Parcela: SensorData) => {
     try {
-        await pool_mongo.collection('parcelas').insertOne(Parcela);
+        // Remover el _id para que MongoDB genere uno nuevo
+        const { _id, ...parcelaWithoutId } = Parcela;
+        await pool_mongo.collection('parcelas').insertOne(parcelaWithoutId);
     } catch (error) {
         throw new Error("Error al insertar nueva parcela: " + error);
     }
@@ -34,7 +36,9 @@ export const PostParcela = async (Parcela: SensorData) => {
 
 export const PostParcelas = async (Parcelas: SensorData[]) => {
     try {
-        const response = await pool_mongo.collection('parcelas').insertMany(Parcelas);
+        // Remover los _id para que MongoDB genere nuevos
+        const parcelasWithoutIds = Parcelas.map(({ _id, ...parcela }) => parcela);
+        const response = await pool_mongo.collection('parcelas').insertMany(parcelasWithoutIds);
         return response.acknowledged;
     } catch (error) {
         throw new Error("Error al insertar nuevas parcelas: " + error);

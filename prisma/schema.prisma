@@ -33,10 +33,9 @@ model Tbl_Logs {
 
 model Tbl_Parcelas {
   id             Int           @id(map: "PK__Tbl_Parc__3213E83F141D1F71") @default(autoincrement())
-  latitud        String        @db.NVarChar(200)
-  longitud       String        @db.NVarChar(200)
   nombre         String        @db.NVarChar(50)
   id_usuario     Int?
+  parcelaMg_Id  String?       @db.NVarChar(100)
   fecha_creacion DateTime?     @default(now(), map: "DF__Tbl_Parce__fecha__46E78A0C") @db.DateTime
   borrado        Boolean?      @default(false, map: "DF__Tbl_Parce__borra__47DBAE45")
   Tbl_Usuarios   Tbl_Usuarios? @relation(fields: [id_usuario], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "FK__Tbl_Parce__id_us__48CFD27E")

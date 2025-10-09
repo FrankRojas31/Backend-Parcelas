@@ -6,6 +6,7 @@ const logsController = new LogsController();
 
 // Rutas de Logs
 router.get('/', (req, res) => logsController.getAll(req, res));
+router.get('/parcelas-eliminadas', (req, res) => logsController.getParcelasEliminadas(req, res));
 router.get('/fecha', (req, res) => logsController.getByFecha(req, res));
 router.get('/:id', (req, res) => logsController.getById(req, res));
 router.get('/usuario/:id_usuario', (req, res) => logsController.getByUsuario(req, res));

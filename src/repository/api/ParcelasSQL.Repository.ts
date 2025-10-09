@@ -52,15 +52,36 @@ export class ParcelasRepositorySQL {
     });
   }
 
-  // Crear parcela
+  // Obtener parcela por ID de MongoDB
+  async getByMongoId(parcelaMg_Id: string) {
+    return await prisma.tbl_Parcelas.findFirst({
+      where: { 
+        parcelaMg_Id,
+        borrado: false 
+      },
+      include: {
+        Tbl_Usuarios: {
+          include: {
+            Tbl_Persona: true,
+            Tbl_Roles: true
+          }
+        }
+      }
+    });
+  }
+
+  // Crear parcela con asociación a MongoDB
   async create(data: {
-    latitud: string;
-    longitud: string;
+    parcelaMg_Id: string;
     nombre: string;
-    id_usuario: number;
+    id_usuario?: number;
   }) {
     return await prisma.tbl_Parcelas.create({
-      data,
+      data: {
+        parcelaMg_Id: data.parcelaMg_Id,
+        nombre: data.nombre,
+        id_usuario: data.id_usuario
+      },
       include: {
         Tbl_Usuarios: {
           include: {

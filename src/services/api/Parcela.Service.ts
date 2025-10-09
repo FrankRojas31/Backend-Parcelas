@@ -5,6 +5,50 @@ import { pool_mongo } from "../../connection/mongo";
 
 export const ParcelaService = () => {
     return {
+        getParcelas: async() => {
+            try {
+                const parcelas = await FindParcelas();
+                const activeParcelas = parcelas.filter(p => !p.isDeleted);
+                
+                // Transformar los datos al formato que espera el frontend
+                const groupedData = activeParcelas.map(parcela => {
+                    const timestamp = typeof parcela.timestamp === 'string' ? parcela.timestamp : new Date(parcela.timestamp).toISOString();
+                    return {
+                        coords: {
+                            lat: parcela.coords.lat,
+                            lon: parcela.coords.lon
+                        },
+                        sensores: {
+                            temperatura: [{
+                                value: parcela.value,
+                                unit: parcela.unit,
+                                timestamp: timestamp,
+                                coords: parcela.coords,
+                                type: "temperatura"
+                            }]
+                        },
+                        timestamp: timestamp,
+                        isDeleted: parcela.isDeleted || false
+                    };
+                });
+                
+                const response: ResponseHelper = {
+                    success: true,
+                    message: `${activeParcelas.length} parcelas encontradas`,
+                    data: groupedData
+                };
+
+                return response;
+            } catch (error) {
+                const response: ResponseHelper = {
+                    success: false,
+                    message: "Error al obtener parcelas: " + error,
+                    data: null
+                };
+                
+                return response;
+            }
+        },
         postParcelas: async() => {
             const result = await GetDataSensors();
             const backup = await FindParcelas();
@@ -18,7 +62,7 @@ export const ParcelaService = () => {
                 );
 
                 const apiParcelasKeys = new Set(
-                    result.temperatura.map(p => 
+                    result.data.map((p: any) => 
                         `${Number(p.coords.lat).toFixed(6)},${Number(p.coords.lon).toFixed(6)}`
                     )
                 );
@@ -27,7 +71,7 @@ export const ParcelaService = () => {
                 const parcelasToInsert: any[] = [];
                 const parcelasToDelete: any[] = [];
 
-                for (const newParcela of result.temperatura) {
+                for (const newParcela of result.data) {
                     const key = `${Number(newParcela.coords.lat).toFixed(6)},${Number(newParcela.coords.lon).toFixed(6)}`;
                     const existingParcela = parcelasMap.get(key);
 
@@ -103,12 +147,12 @@ export const ParcelaService = () => {
                 const response: ResponseHelper = {
                     success: true,
                     message: `Parcelas procesadas: ${parcelasToUpdate.length} actualizadas, ${parcelasToInsert.length} insertadas, ${parcelasToDelete.length} eliminadas`,
-                    data: result.temperatura
+                    data: result.data
                 };
 
                 return response;
             } else {
-                const parcelasWithDeleteFlag = result.temperatura.map(p => ({
+                const parcelasWithDeleteFlag = result.data.map((p: any) => ({
                     ...p,
                     isDeleted: false
                 }));
@@ -117,9 +161,60 @@ export const ParcelaService = () => {
                 const response: ResponseHelper = {
                     success: insertMany,
                     message: insertMany ? "Parcelas insertadas correctamente" : "Error al insertar parcelas",
-                    data: insertMany ? result.temperatura : null
+                    data: insertMany ? result.data : null
                 };
 
+                return response;
+            }
+        },
+        getParcelasWithResponsables: async() => {
+            // Temporalmente, usar la misma lógica que getParcelas (que funcionaba)
+            try {
+                const parcelas = await FindParcelas();
+                const activeParcelas = parcelas.filter(p => !p.isDeleted);
+                
+                // Transformar al mismo formato que getParcelas pero agregando los campos de responsables
+                const groupedData = activeParcelas.map(parcela => {
+                    const timestamp = typeof parcela.timestamp === 'string' ? parcela.timestamp : new Date(parcela.timestamp).toISOString();
+                    return {
+                        coords: {
+                            lat: parcela.coords.lat,
+                            lon: parcela.coords.lon
+                        },
+                        sensores: {
+                            temperatura: [{
+                                value: parcela.value,
+                                unit: parcela.unit,
+                                timestamp: timestamp,
+                                coords: parcela.coords,
+                                type: "temperatura"
+                            }]
+                        },
+                        timestamp: timestamp,
+                        isDeleted: parcela.isDeleted || false,
+                        // Campos adicionales para responsables (vacíos por ahora)
+                        _id: parcela._id.toString(),
+                        sqlData: null,
+                        hasResponsable: false,
+                        responsable: null,
+                        nombre: null
+                    };
+                });
+                
+                const response: ResponseHelper = {
+                    success: true,
+                    message: `${activeParcelas.length} parcelas encontradas`,
+                    data: groupedData
+                };
+
+                return response;
+            } catch (error) {
+                const response: ResponseHelper = {
+                    success: false,
+                    message: "Error al obtener parcelas: " + error,
+                    data: null
+                };
+                
                 return response;
             }
         }
