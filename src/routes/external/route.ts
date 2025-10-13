@@ -1,5 +1,9 @@
 import { Router } from "express";
+import sensorsRoutes from "./Sensors.Routes";
 
 const router = Router();
 
-router.post("/");
+// Rutas de sensores externos
+router.use("/sensors", sensorsRoutes);
+
+export default router;

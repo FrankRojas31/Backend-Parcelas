@@ -1,6 +1,7 @@
 import { FindParcelas, PostParcelas, UpdateParcela, PostParcela } from "../../repository/api/Parcelas.Repository";
-import { GetDataSensors } from "../../repository/external/Sensors.Repository";
+import { GetDataSensors, GetGroupedDataSensors } from "../../repository/external/Sensors.Repository";
 import { ResponseHelper } from "../../types/api/ResponseHelper";
+import { SensorData, SensorType } from "../../types/external/Sensors.type";
 import { pool_mongo } from "../../connection/mongo";
 
 export const ParcelaService = () => {
@@ -8,18 +9,25 @@ export const ParcelaService = () => {
         postParcelas: async() => {
             const result = await GetDataSensors();
             const backup = await FindParcelas();
+            
+            const allSensors: SensorData[] = [
+                ...(result.temperatura?.map(s => ({ ...s, type: 'temperatura' as SensorType })) || []),
+                ...(result.humedad?.map(s => ({ ...s, type: 'humedad' as SensorType })) || []),
+                ...(result.lluvia?.map(s => ({ ...s, type: 'lluvia' as SensorType })) || []),
+                ...(result.radiacion_solar?.map(s => ({ ...s, type: 'radiacion_solar' as SensorType })) || [])
+            ];
 
             if (backup.length > 0) {
                 const parcelasMap = new Map(
                     backup.map(parcela => {
-                        const key = `${Number(parcela.coords.lat).toFixed(6)},${Number(parcela.coords.lon).toFixed(6)}`;
+                        const key = `${Number(parcela.coords.lat).toFixed(6)},${Number(parcela.coords.lon).toFixed(6)},${parcela.type || 'temperatura'}`;
                         return [key, parcela];
                     })
                 );
 
                 const apiParcelasKeys = new Set(
-                    result.temperatura.map(p => 
-                        `${Number(p.coords.lat).toFixed(6)},${Number(p.coords.lon).toFixed(6)}`
+                    allSensors.map(p => 
+                        `${Number(p.coords.lat).toFixed(6)},${Number(p.coords.lon).toFixed(6)},${p.type}`
                     )
                 );
 
@@ -27,8 +35,9 @@ export const ParcelaService = () => {
                 const parcelasToInsert: any[] = [];
                 const parcelasToDelete: any[] = [];
 
-                for (const newParcela of result.temperatura) {
-                    const key = `${Number(newParcela.coords.lat).toFixed(6)},${Number(newParcela.coords.lon).toFixed(6)}`;
+                // Procesar todos los sensores de todos los tipos
+                for (const newParcela of allSensors) {
+                    const key = `${Number(newParcela.coords.lat).toFixed(6)},${Number(newParcela.coords.lon).toFixed(6)},${newParcela.type}`;
                     const existingParcela = parcelasMap.get(key);
 
                     if (existingParcela) {
@@ -37,6 +46,7 @@ export const ParcelaService = () => {
                             value: newParcela.value,
                             unit: newParcela.unit,
                             timestamp: newParcela.timestamp,
+                            type: newParcela.type,
                             isDeleted: false
                         });
                     } else {
@@ -47,6 +57,7 @@ export const ParcelaService = () => {
                     }
                 }
 
+                // Marcar como eliminadas las parcelas que ya no están en la API
                 for (const [key, parcela] of parcelasMap) {
                     if (!apiParcelasKeys.has(key) && !parcela.isDeleted) {
                         parcelasToDelete.push({
@@ -68,6 +79,7 @@ export const ParcelaService = () => {
                                             value: p.value, 
                                             unit: p.unit, 
                                             timestamp: p.timestamp,
+                                            type: p.type,
                                             isDeleted: p.isDeleted
                                         } 
                                     }
@@ -103,12 +115,26 @@ export const ParcelaService = () => {
                 const response: ResponseHelper = {
                     success: true,
                     message: `Parcelas procesadas: ${parcelasToUpdate.length} actualizadas, ${parcelasToInsert.length} insertadas, ${parcelasToDelete.length} eliminadas`,
-                    data: result.temperatura
+                    data: {
+                        sensores_procesados: {
+                            temperatura: result.temperatura?.length || 0,
+                            humedad: result.humedad?.length || 0,
+                            lluvia: result.lluvia?.length || 0,
+                            radiacion_solar: result.radiacion_solar?.length || 0
+                        },
+                        total_sensores: allSensors.length,
+                        operaciones: {
+                            actualizadas: parcelasToUpdate.length,
+                            insertadas: parcelasToInsert.length,
+                            eliminadas: parcelasToDelete.length
+                        }
+                    }
                 };
 
                 return response;
             } else {
-                const parcelasWithDeleteFlag = result.temperatura.map(p => ({
+                // Si no hay backup, insertar todos los sensores
+                const parcelasWithDeleteFlag = allSensors.map(p => ({
                     ...p,
                     isDeleted: false
                 }));
@@ -116,10 +142,38 @@ export const ParcelaService = () => {
                 const insertMany = await PostParcelas(parcelasWithDeleteFlag);
                 const response: ResponseHelper = {
                     success: insertMany,
-                    message: insertMany ? "Parcelas insertadas correctamente" : "Error al insertar parcelas",
-                    data: insertMany ? result.temperatura : null
+                    message: insertMany ? `${allSensors.length} sensores de 4 tipos insertados correctamente` : "Error al insertar parcelas",
+                    data: insertMany ? {
+                        sensores_insertados: {
+                            temperatura: result.temperatura?.length || 0,
+                            humedad: result.humedad?.length || 0,
+                            lluvia: result.lluvia?.length || 0,
+                            radiacion_solar: result.radiacion_solar?.length || 0
+                        },
+                        total_sensores: allSensors.length
+                    } : null
                 };
 
+                return response;
+            }
+        },
+
+        // Nuevo método para obtener datos agrupados
+        getGroupedParcelas: async() => {
+            try {
+                const groupedData = await GetGroupedDataSensors();
+                const response: ResponseHelper = {
+                    success: true,
+                    message: "Datos agrupados obtenidos exitosamente",
+                    data: groupedData
+                };
+                return response;
+            } catch (error) {
+                const response: ResponseHelper = {
+                    success: false,
+                    message: `Error al obtener datos agrupados: ${error}`,
+                    data: null
+                };
                 return response;
             }
         }
