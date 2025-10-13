@@ -105,6 +105,15 @@ export class LogsService {
     }
   }
 
+  // Obtener historial de parcelas eliminadas
+  async getParcelasEliminadas(limit?: number) {
+    try {
+      return await logsRepo.getParcelasEliminadas(limit);
+    } catch (error) {
+      throw new Error(`Error al obtener historial de parcelas eliminadas: ${error}`);
+    }
+  }
+
   // Eliminar log (normalmente no se hace)
   async deleteLog(id: bigint) {
     try {

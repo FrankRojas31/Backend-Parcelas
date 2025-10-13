@@ -124,6 +124,26 @@ export class LogsRepository {
     });
   }
 
+  // Obtener logs de parcelas eliminadas
+  async getParcelasEliminadas(limit?: number) {
+    return await prisma.tbl_Logs.findMany({
+      where: {
+        accion: 'ELIMINAR',
+        entidad: 'PARCELA'
+      },
+      include: {
+        Tbl_Usuarios: {
+          include: {
+            Tbl_Persona: true,
+            Tbl_Roles: true
+          }
+        }
+      },
+      orderBy: { fecha: 'desc' },
+      take: limit
+    });
+  }
+
   // Borrado físico (los logs normalmente no se borran)
   async hardDelete(id: bigint) {
     return await prisma.tbl_Logs.delete({
