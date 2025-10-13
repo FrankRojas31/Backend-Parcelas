@@ -54,10 +54,9 @@ export class ParcelasRepositorySQL {
 
   // Crear parcela
   async create(data: {
-    latitud: string;
-    longitud: string;
     nombre: string;
     id_usuario: number;
+    parcelaMg_Id: string;
   }) {
     return await prisma.tbl_Parcelas.create({
       data,
@@ -73,10 +72,9 @@ export class ParcelasRepositorySQL {
 
   // Actualizar parcela
   async update(id: number, data: Partial<{
-    latitud: string;
-    longitud: string;
     nombre: string;
     id_usuario: number;
+    parcelaMg_Id: string;
   }>) {
     return await prisma.tbl_Parcelas.update({
       where: { id },
