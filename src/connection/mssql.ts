@@ -1,3 +1,14 @@
+/*
+ * ARCHIVO LEGACY - SQL SERVER
+ * Este archivo ya no se usa después de migrar a PostgreSQL con Prisma
+ * Prisma maneja automáticamente las conexiones a la base de datos
+ * usando la variable DATABASE_URL del archivo .env
+ * 
+ * Para conexiones a PostgreSQL, usar directamente el cliente de Prisma:
+ * import { PrismaClient } from '@prisma/client'
+ * const prisma = new PrismaClient()
+ */
+
 import mssql from 'mssql';
 import dotenv from 'dotenv';
 

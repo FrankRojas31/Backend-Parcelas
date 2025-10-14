@@ -6,7 +6,14 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "nodemon --watch \"src/**/*.ts\" --exec \"npx ts-node\" src/index.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "docker:dev": "docker-compose up --build",
+    "docker:down": "docker-compose down",
+    "docker:clean": "docker-compose down -v",
+    "prisma:generate": "npx prisma generate",
+    "prisma:migrate": "npx prisma migrate dev",
+    "prisma:deploy": "npx prisma migrate deploy",
+    "prisma:studio": "npx prisma studio"
   },
   "keywords": [],
   "author": "",
@@ -20,15 +27,15 @@
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.19.0",
-    "mssql": "^12.0.0",
+    "pg": "^8.16.3",
     "prisma": "^6.16.3"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
-    "@types/mssql": "^9.1.8",
     "@types/node": "^24.6.2",
+    "@types/pg": "^8.15.5",
     "dotenv": "^17.2.3",
     "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
