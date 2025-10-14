@@ -9,8 +9,15 @@ export class SensorsController {
   // GET /api/external/sensors - Obtener todos los sensores separados por tipo
   async getAll(req: Request, res: Response) {
     try {
-      const sensors = await sensorsService.getAllSensors();
-      return ResponseHelperClass.success(res, sensors, 'Sensores obtenidos exitosamente');
+      const sensorsByType = await sensorsService.getAllSensors();
+      // Convertir el objeto { temperatura: [], humedad: [], ... } en un array plano y agregar la propiedad type
+      const flatSensors = Object.entries(sensorsByType)
+        .flatMap(([type, arr]) =>
+          Array.isArray(arr)
+            ? arr.map(sensor => ({ ...sensor, type }))
+            : []
+        );
+      return ResponseHelperClass.success(res, flatSensors, 'Sensores obtenidos exitosamente');
     } catch (error: any) {
       return ResponseHelperClass.error(res, error.message, 500);
     }

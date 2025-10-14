@@ -119,6 +119,26 @@ export class ParcelasSQLController {
             }
           }
           
+          // Construir estructura de sensores desde MongoDB si existe
+          let sensoresStructure = null;
+          if (mongoData) {
+            const sensorType = mongoData.type || 'temperatura';
+            sensoresStructure = {
+              [sensorType]: [{
+                value: mongoData.value || 0,
+                unit: mongoData.unit || (
+                  mongoData.type === 'humedad' ? '%' : 
+                  mongoData.type === 'lluvia' ? 'mm' : 
+                  mongoData.type === 'radiacion_solar' ? 'W/m²' : 
+                  '°C'
+                ),
+                timestamp: mongoData.timestamp || new Date(),
+                coords: mongoData.coords || { lat: 0, lon: 0 },
+                type: sensorType
+              }]
+            };
+          }
+
           return {
             id: parcelaSQL.id,
             nombre: parcelaSQL.nombre,
@@ -127,15 +147,7 @@ export class ParcelasSQLController {
             borrado: parcelaSQL.borrado,
             // Datos de MongoDB si existen
             coords: mongoData?.coords || null,
-            sensores: mongoData?.sensores || (mongoData ? {
-              temperatura: [{
-                value: mongoData.value || 0,
-                unit: mongoData.unit || "°C",
-                timestamp: mongoData.timestamp || new Date(),
-                coords: mongoData.coords || { lat: 0, lon: 0 },
-                type: "temperatura"
-              }]
-            } : null),
+            sensores: sensoresStructure,
             timestamp: mongoData?.timestamp || null,
             isDeleted: mongoData?.isDeleted || false,
             // Estructura de responsable adaptada

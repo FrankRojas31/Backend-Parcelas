@@ -126,10 +126,18 @@ export class LogsRepository {
 
   // Obtener logs de parcelas eliminadas
   async getParcelasEliminadas(limit?: number) {
-    return await prisma.tbl_Logs.findMany({
+    const logs = await prisma.tbl_Logs.findMany({
       where: {
-        accion: 'ELIMINAR',
-        entidad: 'PARCELA'
+        OR: [
+          {
+            accion: 'ELIMINAR',
+            entidad: 'PARCELA'
+          },
+          {
+            accion: 'ELIMINAR_PARCELA',
+            entidad: 'Parcelas'
+          }
+        ]
       },
       include: {
         Tbl_Usuarios: {
@@ -142,6 +150,12 @@ export class LogsRepository {
       orderBy: { fecha: 'desc' },
       take: limit
     });
+
+    // Convertir BigInt a string para serialización JSON
+    return logs.map(log => ({
+      ...log,
+      id_log: log.id_log.toString()
+    }));
   }
 
   // Borrado físico (los logs normalmente no se borran)
