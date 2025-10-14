@@ -4,9 +4,11 @@ import { ResponseHelper } from "../../types/api/ResponseHelper";
 import { SensorData, SensorType } from "../../types/external/Sensors.type";
 import { pool_mongo } from "../../connection/mongo";
 
+let pollingInterval: NodeJS.Timeout | null = null;
+let isPolling: boolean = false;
+
 export const ParcelaService = () => {
-    return {
-        postParcelas: async() => {
+    const postParcelasInternal = async() => {
             const result = await GetDataSensors();
             const backup = await FindParcelas();
             
@@ -156,6 +158,57 @@ export const ParcelaService = () => {
 
                 return response;
             }
+        };
+
+    return {
+        postParcelas: postParcelasInternal,
+
+        // Iniciar sincronización automática cada 10 segundos
+        startAutoSync: () => {
+            if (isPolling) {
+                console.log('La sincronización automática ya está activa');
+                return;
+            }
+
+            console.log(' Iniciando sincronización automática de parcelas cada 10 segundos...');
+            isPolling = true;
+
+            // Ejecutar inmediatamente la primera vez
+            postParcelasInternal()
+                .then(result => {
+                    console.log(`[${new Date().toISOString()}]  Primera sincronización completada`);
+                })
+                .catch(error => {
+                    console.error(`[${new Date().toISOString()}]  Error en primera sincronización:`, error);
+                });
+
+            // Configurar el intervalo de 10 segundos
+            pollingInterval = setInterval(async () => {
+                try {
+                    const result = await postParcelasInternal();
+                    console.log(`[${new Date().toISOString()}] ${result.message}`);
+                } catch (error) {
+                    console.error(`[${new Date().toISOString()}] Error en sincronización automática:`, error);
+                }
+            }, 10000);
+        },
+
+        // Detener sincronización automática
+        stopAutoSync: () => {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                isPolling = false;
+                console.log('Sincronización automática detenida');
+            }
+        },
+
+        // Obtener estado del polling
+        getPollingStatus: () => {
+            return {
+                isActive: isPolling,
+                message: isPolling ? 'Sincronización activa' : 'Sincronización inactiva'
+            };
         },
 
         // Nuevo método para obtener datos agrupados

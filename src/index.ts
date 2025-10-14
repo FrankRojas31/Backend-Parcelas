@@ -3,6 +3,7 @@ import cors from "cors";
 import { pool_mssql } from "./connection/mssql";
 import { connectMongo } from "./connection/mongo";
 import router from "./routes/route";
+import { ParcelaService } from "./services/api/Parcela.Service";
 
 const app = express();
 
@@ -22,8 +23,14 @@ async function InitServer() {
   try {
     await pool_mssql.connect();
     await connectMongo();
+    
+    // Iniciar sincronización automática de parcelas cada 10 segundos
+    const parcelaService = ParcelaService();
+    parcelaService.startAutoSync();
+    
     app.listen(PORT, () => {
       console.log(`Servidor corriendo en http://localhost:${PORT}`);
+      console.log(`Sincronización automática de parcelas activa (cada 10 segundos)`);
     });
   } catch (error) {
     console.error("Error al inicializar el servidor:", error);
