@@ -80,12 +80,13 @@ export const GetParcelasWithResponsables = async (req: Request, res: Response) =
                 _id: parcelaMongo._id,
                 coords: parcelaMongo.coords || { lat: 0, lon: 0 },
                 sensores: parcelaMongo.sensores || {
-                    temperatura: [{
+                    // Crear la estructura de sensores dinámicamente según el tipo
+                    [parcelaMongo.type || 'temperatura']: [{
                         value: parcelaMongo.value || 0,
-                        unit: parcelaMongo.unit || "°C",
+                        unit: parcelaMongo.unit || (parcelaMongo.type === 'humedad' ? '%' : parcelaMongo.type === 'lluvia' ? 'mm' : parcelaMongo.type === 'radiacion_solar' ? 'W/m²' : '°C'),
                         timestamp: parcelaMongo.timestamp || new Date().toISOString(),
                         coords: parcelaMongo.coords || { lat: 0, lon: 0 },
-                        type: "temperatura"
+                        type: parcelaMongo.type || 'temperatura'
                     }]
                 },
                 timestamp: parcelaMongo.timestamp,
