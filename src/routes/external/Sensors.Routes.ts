@@ -18,6 +18,21 @@ router.get('/date-range', (req, res) => sensorsController.getByDateRange(req, re
 router.get('/filter/:type', (req, res) => sensorsController.filterByValue(req, res));
 
 // Rutas por tipo específico
+
+// Rutas directas para tipos de sensores específicos (compatibilidad frontend)
+router.get('/humedad', (req, res) => {
+	Object.assign(req.params, { type: 'humedad' });
+	sensorsController.getByType(req, res);
+});
+router.get('/temperatura', (req, res) => {
+	Object.assign(req.params, { type: 'temperatura' });
+	sensorsController.getByType(req, res);
+});
+router.get('/lluvia', (req, res) => {
+	Object.assign(req.params, { type: 'lluvia' });
+	sensorsController.getByType(req, res);
+});
+
 router.get('/type/:type', (req, res) => sensorsController.getByType(req, res));
 
 // Ruta general (debe ir al final)
