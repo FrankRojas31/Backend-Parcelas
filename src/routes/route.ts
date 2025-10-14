@@ -6,9 +6,15 @@ import usuariosRoutes from "./api/Usuarios.Routes";
 import rolesRoutes from "./api/Roles.Routes";
 import logsRoutes from "./api/Logs.Routes";
 import personaRoutes from "./api/Persona.Routes";
+import authRoutes from "./api/Auth.Routes";
 import externalRoutes from "./external/route";
 
 const router = Router();
+
+// Rutas de autenticación
+router.use("/login", authRoutes);
+router.use("/register", authRoutes);
+router.use("/verify-token", authRoutes);
 
 // Rutas API
 router.use("/parcelas", parcelasRoutes);
