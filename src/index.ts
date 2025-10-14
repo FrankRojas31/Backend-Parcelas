@@ -22,7 +22,6 @@ async function InitServer() {
   try {
     await pool_mssql.connect();
     await connectMongo();
-
     app.listen(PORT, () => {
       console.log(`Servidor corriendo en http://localhost:${PORT}`);
     });
