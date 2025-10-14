@@ -36,10 +36,9 @@ export class ParcelasServiceSQL {
 
   // Crear parcela
   async createParcela(data: {
-    latitud: string;
-    longitud: string;
     nombre: string;
     id_usuario: number;
+    parcelaMg_Id: string;
   }) {
     try {
       return await parcelasRepo.create(data);
@@ -50,10 +49,9 @@ export class ParcelasServiceSQL {
 
   // Actualizar parcela
   async updateParcela(id: number, data: Partial<{
-    latitud: string;
-    longitud: string;
     nombre: string;
     id_usuario: number;
+    parcelaMg_Id: string;
   }>) {
     try {
       const parcela = await parcelasRepo.getById(id);

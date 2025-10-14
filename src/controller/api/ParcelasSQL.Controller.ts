@@ -51,17 +51,16 @@ export class ParcelasSQLController {
   // POST /api/parcelas-sql - Crear nueva parcela
   async create(req: Request, res: Response) {
     try {
-      const { latitud, longitud, nombre, id_usuario } = req.body;
+      const { nombre, id_usuario, parcelaMg_Id } = req.body;
 
-      if (!latitud || !longitud || !nombre || !id_usuario) {
-        return ResponseHelperClass.error(res, 'Todos los campos son requeridos', 400);
+      if (!nombre || !id_usuario || !parcelaMg_Id) {
+        return ResponseHelperClass.error(res, 'Todos los campos son requeridos (nombre, id_usuario, parcelaMg_Id)', 400);
       }
 
       const parcela = await parcelasService.createParcela({
-        latitud,
-        longitud,
         nombre,
-        id_usuario: parseInt(id_usuario)
+        id_usuario: parseInt(id_usuario),
+        parcelaMg_Id
       });
 
       return ResponseHelperClass.success(res, parcela, 'Parcela creada exitosamente', 201);
@@ -74,13 +73,12 @@ export class ParcelasSQLController {
   async update(req: Request, res: Response) {
     try {
       const id = parseInt(req.params.id);
-      const { latitud, longitud, nombre, id_usuario } = req.body;
+      const { nombre, id_usuario, parcelaMg_Id } = req.body;
 
       const updateData: any = {};
-      if (latitud) updateData.latitud = latitud;
-      if (longitud) updateData.longitud = longitud;
       if (nombre) updateData.nombre = nombre;
       if (id_usuario) updateData.id_usuario = parseInt(id_usuario);
+      if (parcelaMg_Id) updateData.parcelaMg_Id = parcelaMg_Id;
 
       const parcela = await parcelasService.updateParcela(id, updateData);
       return ResponseHelperClass.success(res, parcela, 'Parcela actualizada exitosamente');
@@ -97,6 +95,16 @@ export class ParcelasSQLController {
       return ResponseHelperClass.success(res, null, 'Parcela eliminada exitosamente');
     } catch (error: any) {
       return ResponseHelperClass.error(res, error.message, 404);
+    }
+  }
+
+  // GET /api/parcelas-sql/table - Obtener parcelas para tabla (con información de responsables)
+  async getForTable(req: Request, res: Response) {
+    try {
+      const parcelas = await parcelasService.getAllParcelas();
+      return ResponseHelperClass.success(res, parcelas, 'Parcelas para tabla obtenidas exitosamente');
+    } catch (error: any) {
+      return ResponseHelperClass.error(res, error.message, 500);
     }
   }
 }

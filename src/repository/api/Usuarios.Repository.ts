@@ -12,8 +12,7 @@ export class UsuariosRepository {
         Tbl_Persona: true,
         Tbl_Parcelas: {
           where: { borrado: false }
-        },
-        Tbl_Logs: true
+        }
       }
     });
   }
@@ -27,8 +26,7 @@ export class UsuariosRepository {
         Tbl_Persona: true,
         Tbl_Parcelas: {
           where: { borrado: false }
-        },
-        Tbl_Logs: true
+        }
       }
     });
   }
