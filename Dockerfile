@@ -9,7 +9,7 @@ COPY package*.json ./
 COPY tsconfig.json ./
 
 # Instalar dependencias
-RUN npm ci --only=production
+RUN npm ci
 
 # Copiar el código fuente
 COPY . .
@@ -24,7 +24,7 @@ RUN npx prisma generate
 RUN npm run build
 
 # Exponer el puerto
-EXPOSE $PORT
+EXPOSE 3000
 
 # Crear usuario no root para seguridad
 RUN addgroup -g 1001 -S nodejs
