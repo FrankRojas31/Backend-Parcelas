@@ -4,6 +4,11 @@ import { ObjectId } from 'mongodb';
 
 const parcelasMongoRepo = new ParcelasMongoRepository();
 
+// Inicializar índices una sola vez al cargar el servicio
+parcelasMongoRepo.createIndexes().catch(err => 
+  console.error('Error inicializando índices:', err)
+);
+
 export class ParcelasMongoService {
   // Validar si el ID es un ObjectId válido
   private isValidObjectId(id: string): boolean {

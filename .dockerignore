@@ -9,7 +9,6 @@ dist/
 build/
 
 # Archivos de entorno (no incluir en producción)
-.env
 .env.local
 .env.production
 

@@ -11,25 +11,33 @@ COPY tsconfig.json ./
 # Instalar dependencias
 RUN npm ci
 
-# Copiar el código fuente
-COPY . .
+# Copiar el esquema de Prisma para generar el cliente
+COPY prisma ./prisma
 
-# Instalar Prisma CLI globalmente
-RUN npm install -g prisma
-
-# Generar cliente de Prisma
+# Generar cliente de Prisma (necesario para compilación)
 RUN npx prisma generate
+
+# Copiar el resto del código fuente
+COPY . .
 
 # Compilar TypeScript
 RUN npm run build
 
-# Exponer el puerto
-EXPOSE 3000
+# Copiar archivos generados de Prisma al directorio dist (necesario para runtime)
+RUN cp -r src/generated dist/
 
 # Crear usuario no root para seguridad
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
+
+# Cambiar propietario de los archivos al usuario nextjs
+RUN chown -R nextjs:nodejs /app
+
+# Cambiar al usuario no root
 USER nextjs
 
+# Exponer el puerto
+EXPOSE 3000
+
 # Comando para ejecutar la aplicación
-CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]
+CMD ["npm", "start"]

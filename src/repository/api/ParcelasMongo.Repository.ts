@@ -5,15 +5,43 @@ import { ObjectId } from "mongodb";
 export class ParcelasMongoRepository {
   private collection = pool_mongo.collection<SensorData>('parcelas');
 
+  // Crear índices para optimizar consultas (ejecutar una vez al inicio)
+  async createIndexes() {
+    try {
+      // Índice compuesto en isDeleted para acelerar el filtro principal
+      await this.collection.createIndex({ isDeleted: 1 });
+      console.log('✓ Índices creados para mejor rendimiento');
+    } catch (error) {
+      console.error('⚠️ Error creando índices:', error);
+    }
+  }
+
   // Validar si el ID es un ObjectId válido
   private isValidObjectId(id: string): boolean {
     return ObjectId.isValid(id) && (id.length === 24);
   }
 
-  // Obtener todas las parcelas de MongoDB
+  // Obtener todas las parcelas de MongoDB usando batch processing optimizado
   async getAll() {
     try {
-      return await this.collection.find({ isDeleted: { $ne: true } }).toArray();
+      console.time('⏱️ Tiempo total de carga');
+      
+
+      // Usar toArray() con batchSize y allowDiskUse (sin timeout: false)
+      const allData = await this.collection
+        .find(
+          { isDeleted: { $ne: true } },
+          {
+            batchSize: 50000,
+            allowDiskUse: true
+          }
+        )
+        .toArray();
+
+      console.timeEnd('⏱️ Tiempo total de carga');
+      console.log(`✓ COMPLETADO: ${allData.length} parcelas cargadas`);
+      
+      return allData;
     } catch (error) {
       throw new Error(`Error al obtener parcelas de MongoDB: ${error}`);
     }

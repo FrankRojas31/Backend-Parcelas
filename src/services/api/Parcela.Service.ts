@@ -190,7 +190,7 @@ export const ParcelaService = () => {
                 } catch (error) {
                     console.error(`[${new Date().toISOString()}] Error en sincronización automática:`, error);
                 }
-            }, 10000);
+            }, 60000);
         },
 
         // Detener sincronización automática

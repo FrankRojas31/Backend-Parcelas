@@ -1,24 +1,6 @@
 version: "3.8"
 
 services:
-  # Base de datos PostgreSQL
-  postgres:
-    image: postgres:15-alpine
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres123
-      POSTGRES_DB: parcelas_db
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-
   # Aplicación Node.js
   app:
     build: .
@@ -26,18 +8,13 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://postgres:postgres123@postgres:5432/parcelas_db
+      - DATABASE_URL=sqlserver://74.208.227.171:1433;database=parcela_db;user=sa;password=ContrasenaSegura123!;encrypt=true;trustServerCertificate=true
       - MONGO_URI=mongodb+srv://admin:TJkbAFEVPHP2krAk@parcelasbd.ubiwgfs.mongodb.net/parcelas
       - API_EXTERNAL_URL=https://sensores-async-api.onrender.com/api/sensors/all
       - JWT_SECRET=desarrollo_jwt_secret_123
       - PORT=3000
-    depends_on:
-      postgres:
-        condition: service_healthy
     volumes:
       - .:/app
       - /app/node_modules
     command: npm run dev
-
-volumes:
-  postgres_data:
+    restart: unless-stopped

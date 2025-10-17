@@ -2,10 +2,12 @@ import { Request, Response } from "express";
 import { ParcelaService } from "../../services/api/Parcela.Service";
 import { ParcelasMongoService } from "../../services/api/ParcelasMongo.Service";
 import { ParcelasRepositorySQL } from "../../repository/api/ParcelasSQL.Repository";
+import { SensorsService } from "../../services/external/Sensors.Service";
 import { ResponseHelperClass } from "../../types/api/ResponseHelper";
 
 const parcelasMongoService = new ParcelasMongoService();
 const parcelasRepositorySQL = new ParcelasRepositorySQL();
+const sensorsService = new SensorsService();
 
 export const PostParcelas = async (req: Request, res: Response) => {
     try {
@@ -58,8 +60,16 @@ export const GetParcelasGrouped = async (req: Request, res: Response) => {
 // Nueva función para obtener parcelas con información de responsables (MongoDB + SQL)
 export const GetParcelasWithResponsables = async (req: Request, res: Response) => {
     try {
-        // Obtener todas las parcelas de MongoDB
-        const parcelasMongo = await parcelasMongoService.getAllParcelasMongo();
+        // Obtener todos los sensores usando el servicio de sensores
+        const sensorsByType = await sensorsService.getAllSensors();
+        
+        // Convertir el objeto de sensores agrupados por tipo en un array plano
+        const flatSensors = Object.entries(sensorsByType)
+            .flatMap(([type, arr]) =>
+                Array.isArray(arr)
+                    ? arr.map(sensor => ({ ...sensor, type }))
+                    : []
+            );
         
         // Obtener todas las parcelas SQL con información de usuario
         const parcelasSQL = await parcelasRepositorySQL.getAll();
@@ -72,25 +82,43 @@ export const GetParcelasWithResponsables = async (req: Request, res: Response) =
             }
         });
         
+        // Agrupar sensores por _id (si existe) o por coordenadas
+        const sensorsGroupedById = new Map();
+        flatSensors.forEach((sensor: any) => {
+            const id = sensor._id?.toString() || `${sensor.coords.lat}_${sensor.coords.lon}`;
+            if (!sensorsGroupedById.has(id)) {
+                sensorsGroupedById.set(id, []);
+            }
+            sensorsGroupedById.get(id).push(sensor);
+        });
+        
         // Combinar datos
-        const parcelasWithResponsables = parcelasMongo.map((parcelaMongo: any) => {
-            const parcelaSQL = parcelasSQLMap.get(parcelaMongo._id.toString());
+        const parcelasWithResponsables = Array.from(sensorsGroupedById.entries()).map(([id, sensors]: [string, any[]]) => {
+            const firstSensor = sensors[0];
+            const parcelaSQL = parcelasSQLMap.get(id);
+            
+            // Construir el objeto de sensores dinámicamente
+            const sensoresObj: any = {};
+            sensors.forEach((sensor: any) => {
+                const sensorType = sensor.type || 'temperatura';
+                if (!sensoresObj[sensorType]) {
+                    sensoresObj[sensorType] = [];
+                }
+                sensoresObj[sensorType].push({
+                    value: sensor.value || 0,
+                    unit: sensor.unit || (sensorType === 'humedad' ? '%' : sensorType === 'lluvia' ? 'mm' : sensorType === 'radiacion_solar' ? 'W/m²' : '°C'),
+                    timestamp: sensor.timestamp || new Date().toISOString(),
+                    coords: sensor.coords || { lat: 0, lon: 0 },
+                    type: sensorType
+                });
+            });
             
             return {
-                _id: parcelaMongo._id,
-                coords: parcelaMongo.coords || { lat: 0, lon: 0 },
-                sensores: parcelaMongo.sensores || {
-                    // Crear la estructura de sensores dinámicamente según el tipo
-                    [parcelaMongo.type || 'temperatura']: [{
-                        value: parcelaMongo.value || 0,
-                        unit: parcelaMongo.unit || (parcelaMongo.type === 'humedad' ? '%' : parcelaMongo.type === 'lluvia' ? 'mm' : parcelaMongo.type === 'radiacion_solar' ? 'W/m²' : '°C'),
-                        timestamp: parcelaMongo.timestamp || new Date().toISOString(),
-                        coords: parcelaMongo.coords || { lat: 0, lon: 0 },
-                        type: parcelaMongo.type || 'temperatura'
-                    }]
-                },
-                timestamp: parcelaMongo.timestamp,
-                isDeleted: parcelaMongo.isDeleted || false,
+                _id: firstSensor._id || id,
+                coords: firstSensor.coords || { lat: 0, lon: 0 },
+                sensores: sensoresObj,
+                timestamp: firstSensor.timestamp,
+                isDeleted: firstSensor.isDeleted || false,
                 sqlData: parcelaSQL || null,
                 hasResponsable: !!parcelaSQL,
                 responsable: parcelaSQL ? {
